@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spray Record</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Archivo+Expanded:wght@600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap');
+
+  :root{
+    --paper:#F4F1E6;
+    --card:#FBFAF4;
+    --ink:#23281E;
+    --ink-soft:#5B6154;
+    --forest:#33492E;
+    --forest-dark:#233020;
+    --wheat:#C79A3D;
+    --wheat-dark:#8A6A24;
+    --rust:#A64B2A;
+    --rust-bg:#F2E1D8;
+    --sage:#7C9473;
+    --sage-bg:#E7EEE1;
+    --line:#DAD4C2;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;}
+  .app{
+    font-family:'Inter',sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    padding:28px 20px 60px;
+    min-height:100vh;
+  }
+  .wrap{max-width:960px;margin:0 auto;}
+  .masthead{
+    display:flex;justify-content:space-between;align-items:flex-end;
+    border-bottom:3px solid var(--forest);
+    padding-bottom:14px;margin-bottom:22px;flex-wrap:wrap;gap:10px;
+  }
+  .masthead h1{
+    font-family:'Archivo Expanded',sans-serif;
+    font-weight:700;font-size:26px;letter-spacing:0.5px;
+    margin:0;color:var(--forest-dark);text-transform:uppercase;
+  }
+  .masthead .sub{font-size:12.5px;color:var(--ink-soft);margin-top:4px;}
+  .masthead .retention{
+    font-family:'IBM Plex Mono',monospace;font-size:11.5px;
+    background:var(--forest);color:var(--paper);
+    padding:6px 10px;border-radius:3px;white-space:nowrap;
+  }
+
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:6px;
+    padding:18px 20px;margin-bottom:18px;
+  }
+  .card h2{
+    font-family:'Archivo Expanded',sans-serif;font-size:14px;font-weight:600;
+    text-transform:uppercase;letter-spacing:0.6px;color:var(--forest-dark);
+    margin:0 0 14px;display:flex;align-items:center;justify-content:space-between;
+  }
+  .card h2 button{
+    font-family:'Inter';font-size:11px;font-weight:600;text-transform:none;
+    letter-spacing:0;background:none;border:1px solid var(--line);
+    border-radius:4px;padding:4px 9px;cursor:pointer;color:var(--ink-soft);
+  }
+  .card h2 button:hover{border-color:var(--forest);color:var(--forest-dark);}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;}
+  .field label{display:block;font-size:11px;color:var(--ink-soft);margin-bottom:4px;letter-spacing:0.2px;}
+  .field input,.field select{
+    width:100%;font-family:'Inter';font-size:13.5px;padding:7px 8px;
+    border:1px solid var(--line);border-radius:4px;background:#fff;color:var(--ink);
+  }
+  .field input:focus,.field select:focus{outline:none;border-color:var(--forest);}
+  .readonly-view{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px 20px;}
+  .readonly-view div .k{font-size:11px;color:var(--ink-soft);}
+  .readonly-view div .v{font-family:'IBM Plex Mono',monospace;font-size:13.5px;margin-top:2px;}
+
+  .gauge-wrap{margin-top:14px;}
+  .gauge-label{display:flex;justify-content:space-between;font-size:11px;color:var(--ink-soft);margin-bottom:5px;}
+  .gauge-track{position:relative;height:14px;border-radius:7px;overflow:hidden;
+    background:linear-gradient(to right,
+      var(--rust) 0%, var(--rust) 12.5%,
+      var(--sage) 12.5%, var(--sage) 50%,
+      var(--wheat) 50%, var(--wheat) 62.5%,
+      var(--rust) 62.5%, var(--rust) 100%);
+  }
+  .gauge-needle{position:absolute;top:-3px;width:3px;height:20px;background:var(--ink);border-radius:2px;transition:left 0.15s;}
+  .gauge-verdict{margin-top:8px;font-size:13px;font-weight:600;}
+
+  form.record-form .grid{margin-bottom:12px;}
+  .products-block{margin-bottom:14px;}
+  .products-block > label{display:block;font-size:11px;color:var(--ink-soft);margin-bottom:6px;}
+  .product-row{display:grid;grid-template-columns:2fr 1fr auto;gap:8px;margin-bottom:8px;align-items:center;}
+  .product-row input{font-family:'Inter';font-size:13.5px;padding:7px 8px;border:1px solid var(--line);border-radius:4px;background:#fff;color:var(--ink);width:100%;}
+  .product-row input:focus{outline:none;border-color:var(--forest);}
+  .remove-product-btn{background:none;border:1px solid var(--line);border-radius:4px;color:var(--ink-soft);cursor:pointer;font-size:14px;padding:6px 9px;line-height:1;}
+  .remove-product-btn:hover{border-color:var(--rust);color:var(--rust);}
+  .remove-product-btn:disabled{opacity:0.35;cursor:not-allowed;}
+  .add-product-btn{
+    font-family:'Inter';font-weight:600;font-size:12px;padding:6px 12px;
+    background:none;color:var(--forest-dark);border:1px dashed var(--forest);border-radius:4px;cursor:pointer;
+  }
+  .add-product-btn:hover{background:var(--sage-bg);}
+  .product-list-cell{white-space:normal;line-height:1.5;}
+  .product-list-cell div{white-space:nowrap;}
+  .form-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:6px;}
+  button.primary{
+    font-family:'Inter';font-weight:600;font-size:13px;padding:9px 18px;
+    background:var(--forest);color:var(--paper);border:none;border-radius:4px;cursor:pointer;
+  }
+  button.primary:hover{background:var(--forest-dark);}
+  button.secondary{
+    font-family:'Inter';font-weight:600;font-size:13px;padding:9px 16px;
+    background:none;color:var(--ink-soft);border:1px solid var(--line);border-radius:4px;cursor:pointer;
+  }
+  button.secondary:hover{border-color:var(--forest);color:var(--forest-dark);}
+
+  .table-scroll{overflow-x:auto;}
+  table{border-collapse:collapse;width:100%;min-width:920px;font-family:'IBM Plex Mono',monospace;font-size:12px;}
+  thead th{
+    text-align:left;font-family:'Inter';font-weight:600;font-size:10.5px;
+    text-transform:uppercase;letter-spacing:0.4px;color:var(--ink-soft);
+    padding:8px 8px;border-bottom:2px solid var(--forest);white-space:nowrap;
+  }
+  tbody td{padding:8px 8px;border-bottom:1px solid var(--line);white-space:nowrap;}
+  tbody tr:hover{background:#F0EDDE;}
+  .dt-pill{padding:2px 7px;border-radius:10px;font-weight:600;font-size:11.5px;}
+  .dt-safe{background:var(--sage-bg);color:#2F4626;}
+  .dt-caution{background:#F4E7CC;color:var(--wheat-dark);}
+  .dt-risk{background:var(--rust-bg);color:var(--rust);}
+  .del-btn{background:none;border:none;color:var(--ink-soft);cursor:pointer;font-size:14px;}
+  .del-btn:hover{color:var(--rust);}
+  .empty{padding:26px 8px;text-align:center;color:var(--ink-soft);font-family:'Inter';font-size:13px;}
+
+  .footer-row{display:flex;justify-content:space-between;align-items:center;margin-top:8px;flex-wrap:wrap;gap:10px;}
+  .count{font-size:12px;color:var(--ink-soft);}
+
+  .saved-products-list{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;}
+  .saved-products-list:empty{margin-bottom:0;}
+  .saved-chip{
+    display:flex;align-items:center;gap:8px;background:var(--sage-bg);
+    border:1px solid var(--line);border-radius:16px;padding:6px 8px 6px 12px;
+    font-family:'Inter';font-size:12.5px;color:var(--forest-dark);
+  }
+  .saved-chip .rate{color:var(--ink-soft);font-family:'IBM Plex Mono',monospace;font-size:11.5px;}
+  .saved-chip button{
+    background:none;border:none;color:var(--ink-soft);cursor:pointer;
+    font-size:13px;line-height:1;padding:2px 3px;border-radius:50%;
+  }
+  .saved-chip button:hover{color:var(--rust);}
+  .saved-products-empty{font-size:12.5px;color:var(--ink-soft);margin-bottom:14px;}
+  .add-saved-row{display:grid;grid-template-columns:2fr 1fr auto;gap:8px;align-items:center;}
+  .add-saved-row input{font-family:'Inter';font-size:13.5px;padding:7px 8px;border:1px solid var(--line);border-radius:4px;background:#fff;color:var(--ink);width:100%;}
+  .add-saved-row input:focus{outline:none;border-color:var(--forest);}
+
+  .quick-pick-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
+  .quick-pick-row:empty{margin-bottom:0;}
+  .quick-pick-label{width:100%;font-size:11px;color:var(--ink-soft);margin-bottom:2px;}
+  .quick-pick-chip{
+    display:inline-flex;align-items:center;gap:5px;
+    background:var(--card);border:1.5px solid var(--forest);border-radius:16px;
+    padding:8px 14px;font-family:'Inter';font-size:13px;font-weight:600;
+    color:var(--forest-dark);cursor:pointer;
+  }
+  .quick-pick-chip:active{background:var(--sage-bg);}
+  .quick-pick-chip .rate{font-weight:400;color:var(--ink-soft);font-family:'IBM Plex Mono',monospace;font-size:11.5px;}
+
+  @media (max-width:640px){
+    .masthead{flex-direction:column;align-items:flex-start;}
+    table{min-width:760px;}
+
+    .field input,.field select,.product-row input,.add-saved-row input{
+      font-size:16px;padding:10px 10px;
+    }
+    .product-row{display:flex;flex-wrap:wrap;gap:8px;}
+    .product-row .pr-name{flex:1 1 100%;}
+    .product-row .pr-rate{flex:1 1 auto;min-width:0;}
+    .product-row .remove-product-btn{flex:0 0 auto;padding:8px 12px;font-size:16px;}
+    .add-saved-row{grid-template-columns:1fr;}
+    .add-saved-row .add-product-btn{padding:11px;font-size:13.5px;}
+    .saved-chip{padding:8px 10px 8px 14px;font-size:13.5px;}
+    .saved-chip button{font-size:16px;padding:6px 8px;}
+    .quick-pick-chip{padding:10px 16px;font-size:14px;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="wrap">
+
+    <div class="masthead">
+      <div>
+        <h1>Spray record</h1>
+        <div class="sub" id="operatorLine">Loading operator details…</div>
+      </div>
+      <div class="retention">Records held 2 yrs from date of entry</div>
+    </div>
+
+    <div class="card" id="operatorCard">
+      <h2>Operator & property <button id="editOperatorBtn" type="button">Edit</button></h2>
+      <div id="operatorView"></div>
+      <div id="operatorEdit" style="display:none;">
+        <div class="grid">
+          <div class="field"><label>User name</label><input id="opName"></div>
+          <div class="field"><label>User address</label><input id="opAddress"></div>
+          <div class="field"><label>Contact number</label><input id="opPhone"></div>
+        </div>
+        <div class="form-actions">
+          <button class="secondary" type="button" id="cancelOperator">Cancel</button>
+          <button class="primary" type="button" id="saveOperator">Save changes</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="equipmentCard">
+      <h2>Equipment <button id="editEquipmentBtn" type="button">Edit</button></h2>
+      <div id="equipmentView"></div>
+      <div id="equipmentEdit" style="display:none;">
+        <div class="grid">
+          <div class="field"><label>Equipment type</label><input id="eqType"></div>
+          <div class="field"><label>Nozzle type & flow rate</label><input id="eqNozzle"></div>
+          <div class="field"><label>Spray pressure (Bar)</label><input id="eqPressure"></div>
+          <div class="field"><label>Spray volume (L/ha)</label><input id="eqVolume"></div>
+          <div class="field"><label>Travel speed (km/hr)</label><input id="eqSpeed"></div>
+        </div>
+        <div class="form-actions">
+          <button class="secondary" type="button" id="cancelEquipment">Cancel</button>
+          <button class="primary" type="button" id="saveEquipment">Save changes</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Saved products</h2>
+      <div class="saved-products-list" id="savedProductsList"></div>
+      <div class="saved-products-empty" id="savedProductsEmpty" style="display:none;">No saved products yet — add one below, or products you type into a spray record will be saved automatically.</div>
+      <div class="add-saved-row">
+        <input id="newSavedName" placeholder="Product name, e.g. Glyphosate 450">
+        <input id="newSavedRate" placeholder="Default rate/ha, e.g. 1.5 L/ha">
+        <button class="add-product-btn" type="button" id="addSavedBtn">+ Save</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Add spray record</h2>
+      <form class="record-form" id="recordForm">
+        <div class="grid">
+          <div class="field"><label>Date</label><input type="date" id="rDate" required></div>
+          <div class="field"><label>Paddock location or ID</label><input id="rPaddock" placeholder="e.g. North block 4" required></div>
+          <div class="field"><label>Crop or situation</label><input id="rCrop" placeholder="e.g. Wheat" required></div>
+          <div class="field"><label>Area treated (ha)</label><input type="number" step="0.1" min="0" id="rArea"></div>
+          <div class="field"><label>Spray time</label><input type="time" id="rTime"></div>
+          <div class="field"><label>Wind speed (km/hr)</label><input type="number" step="0.1" min="0" id="rWindSpeed"></div>
+          <div class="field"><label>Wind direction</label>
+            <select id="rWindDir">
+              <option>N</option><option>NE</option><option>E</option><option>SE</option>
+              <option>S</option><option>SW</option><option>W</option><option>NW</option>
+            </select>
+          </div>
+          <div class="field"><label>Temp (°C)</label><input type="number" step="0.1" id="rTemp"></div>
+          <div class="field"><label>RH (%)</label><input type="number" step="0.1" min="0" max="100" id="rRH"></div>
+        </div>
+        <div class="products-block">
+          <label>Products (including adjuvants) and rate/ha</label>
+          <div class="quick-pick-row" id="quickPickRow"></div>
+          <div id="productRows"></div>
+          <datalist id="productList"></datalist>
+          <button class="add-product-btn" type="button" id="addProductBtn">+ Add product</button>
+        </div>
+
+        <div class="gauge-wrap" id="gaugeWrap" style="display:none;">
+          <div class="gauge-label"><span>Delta T (calculated)</span><span id="gaugeValue">—</span></div>
+          <div class="gauge-track"><div class="gauge-needle" id="gaugeNeedle" style="left:0%;"></div></div>
+          <div class="gauge-verdict" id="gaugeVerdict"></div>
+        </div>
+
+        <div class="form-actions">
+          <button class="primary" type="submit">Save record</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>Spray log</h2>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th><th>Paddock</th><th>Products (rate/ha)</th><th>Crop</th>
+              <th>Area (ha)</th><th>Time</th><th>Wind (km/h)</th><th>Dir</th>
+              <th>Temp (°C)</th><th>RH (%)</th><th>Delta T</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="recordsBody"></tbody>
+        </table>
+      </div>
+      <div class="empty" id="emptyState" style="display:none;">No records yet. Add your first spray record above.</div>
+      <div class="footer-row">
+        <span class="count" id="recordCount"></span>
+        <button class="secondary" type="button" id="exportBtn">Export CSV</button>
+        <button class="secondary" type="button" id="exportExcelBtn">Export Excel</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+(function(){
+  const storage = {
+    async get(key){
+      try {
+        const res = await window.storage.get(key, false);
+        return res; // { key, value, shared } or null
+      } catch(e){
+        return null;
+      }
+    },
+    async set(key, value){
+      try {
+        const res = await window.storage.set(key, value, false);
+        if (!res) console.error('Storage save failed for key:', key);
+        return res;
+      } catch(e){
+        console.error('Storage error saving key:', key, e);
+        return null;
+      }
+    },
+  };
+  const DEFAULT_OPERATOR = { name:"Sam Edwards", address:"475 Bluff Road, Minlaton", phone:"0427176304" };
+  const DEFAULT_EQUIPMENT = { type:"Gold Acres Praire 6536", nozzle:"Arag CFA-T 025", pressure:"4", volume:"100", speed:"15" };
+  const DEFAULT_SAVED_PRODUCTS = [
+    { name:"Ammonium sulfate (980g/kg Ammonium sulfate)", rate:"" },
+    { name:"Aria (500 g/kg Flonicamid)", rate:"" },
+    { name:"Azoxystrobin (250g/L Azoxystrobin)", rate:"" },
+    { name:"Bifenthrin 250 (250 g/L Bifenthrin)", rate:"" },
+    { name:"Brodal Options (500g/L Diflufenican)", rate:"" },
+    { name:"BS1000 (1000 g/L Alcohol Alkoxylate)", rate:"" },
+    { name:"Clethodim (360g/L Clethodim)", rate:"" },
+    { name:"Dicamba (500g/L Dicamba)", rate:"" },
+    { name:"Diflu-Brom (250g/L Bromoxynil, 25g/L Diflufenican)", rate:"" },
+    { name:"Dimetheoate 400 (400g/L Dimetheoate)", rate:"" },
+    { name:"Dimethoate (400 g/L Dimethoate)", rate:"" },
+    { name:"Diuron 900WG (900g/kg Diuron)", rate:"" },
+    { name:"Echo 900 (900 g/kg Chlorothalonil)", rate:"" },
+    { name:"Elantra Xtreme (200g/L Quizalofop-P-ethyl)", rate:"" },
+    { name:"Epoxiconazole (500g/L Epoxiconazole)", rate:"" },
+    { name:"Ester 680 (680 g/L 2,4-D present as the 2-ethylhexyl ester)", rate:"" },
+    { name:"Ezyflow Nano Manganese (400g/L Manganese)", rate:"" },
+    { name:"Factor (250 g/kg Butroxydim)", rate:"" },
+    { name:"Fitness Fungicide (435g/L Propiconazole)", rate:"" },
+    { name:"Fluroxypyr 400 (400 g/L Fluroxypyr present as the Methylheptyl ester)", rate:"" },
+    { name:"Genfarm Panzer 450 Herbicide (450 g/L Glyphosate present as the isopropylamine salt)", rate:"" },
+    { name:"Genfarm Paraquat (250 g/L Paraquat present as Paraquat dichloride)", rate:"" },
+    { name:"Genfarm Prosulfocarb 800 Herbicide (800g/L Prosulfocarb)", rate:"" },
+    { name:"Hammer 400 EC (400 g/L Carfentrazone-ethyl)", rate:"" },
+    { name:"Howzat (500g/L Carbendazim)", rate:"" },
+    { name:"Intercept (33 g/L Imazamox, 15 g/L Imazapyr)", rate:"" },
+    { name:"Ken Amine 625 (625 g/L 2,4-D present as the Dimethylamine and Diethanolamine salts)", rate:"" },
+    { name:"Lontrel Advanced (600g/L Clopyralid)", rate:"" },
+    { name:"Loveland Adopt Spray Oil (228g/L Alkoxylated Alcohol non-ionic surfactants)", rate:"" },
+    { name:"LVE MCPA (570g/L MCPA as 2-ethyl hexyl ester)", rate:"" },
+    { name:"Metsulfuron (600 g/kg Metsulfuron methyl)", rate:"" },
+    { name:"MSO (630g/L Methyl esters of vegetable oil)", rate:"" },
+    { name:"Nufarm Sentry (525g/kg Imazapic, 175g/kg Imazapyr)", rate:"" },
+    { name:"Overwatch (400 g/L Bixlozone)", rate:"" },
+    { name:"Paradigm (200 g/kg Halauxifen as the methyl ester, 200 g/kg Florasulam)", rate:"" },
+    { name:"Priority Herbicide (200g/L Florasulam)", rate:"" },
+    { name:"Prothioconazole (420g/L Prothioconazole)", rate:"" },
+    { name:"Reflex (240g/L Fomesafen)", rate:"" },
+    { name:"Roundup Ultra Max (570g/L Glyphosate)", rate:"" },
+    { name:"Rustler 900 (900g/kg Propyzamide)", rate:"" },
+    { name:"S-Metolachlor 960 Herbicide (960 g/L S-Metolachlor)", rate:"" },
+    { name:"Sharpen (700 g/L Saflufenacil)", rate:"" },
+    { name:"Simazine 900WG (900g/kg Simazine)", rate:"" },
+    { name:"SP 700 (350 g/L Soyal Phospholipids, 350 g/L Propionic Acid)", rate:"" },
+    { name:"Tebuconazole (430g/L Tebuconazole)", rate:"" },
+    { name:"Terrad'or (700 g/kg Tiafenacil)", rate:"" },
+    { name:"Triflur X (480g/L Trifluralin)", rate:"" },
+    { name:"Trojan (150 g/L Gamma-Cyhalothrin)", rate:"" },
+  ];
+
+  let operator = DEFAULT_OPERATOR, equipment = DEFAULT_EQUIPMENT, records = [], savedProducts = [];
+
+  function calcWetBulb(T, RH){
+    return T * Math.atan(0.151977 * Math.sqrt(RH + 8.313659))
+      + Math.atan(T + RH) - Math.atan(RH - 1.676331)
+      + 0.00391838 * Math.pow(RH, 1.5) * Math.atan(0.023101 * RH)
+      - 4.686035;
+  }
+  function calcDeltaT(T, RH){
+    if (T === null || RH === null || isNaN(T) || isNaN(RH)) return null;
+    const tw = calcWetBulb(T, RH);
+    return Math.round((T - tw) * 10) / 10;
+  }
+  function deltaTZone(dt){
+    if (dt === null) return { cls:'dt-safe', label:'—', verdict:'', color:'' };
+    if (dt < 2) return { cls:'dt-risk', label:dt+'°', verdict:'Too low — runoff and fine droplet risk' };
+    if (dt <= 8) return { cls:'dt-safe', label:dt+'°', verdict:'Ideal spraying conditions' };
+    if (dt <= 10) return { cls:'dt-caution', label:dt+'°', verdict:'Marginal — apply with caution' };
+    return { cls:'dt-risk', label:dt+'°', verdict:'Do not spray — high drift risk' };
+  }
+
+  async function loadAll(){
+    try {
+      const o = await storage.get('operator');
+      operator = o ? JSON.parse(o.value) : DEFAULT_OPERATOR;
+    } catch(e){ operator = DEFAULT_OPERATOR; }
+    try {
+      const e = await storage.get('equipment');
+      equipment = e ? JSON.parse(e.value) : DEFAULT_EQUIPMENT;
+    } catch(e){ equipment = DEFAULT_EQUIPMENT; }
+    try {
+      const r = await storage.get('records');
+      records = r ? JSON.parse(r.value) : [];
+    } catch(e){ records = []; }
+    try {
+      const sp = await storage.get('savedProducts');
+      savedProducts = sp ? JSON.parse(sp.value) : null;
+    } catch(e){ savedProducts = null; }
+    if (savedProducts === null){
+      // Migrate from legacy plain-name list, if present
+      let legacyNames = [];
+      try {
+        const kp = await storage.get('knownProducts');
+        legacyNames = kp ? JSON.parse(kp.value) : [];
+      } catch(e){ legacyNames = []; }
+      savedProducts = legacyNames.map(n => ({ name: n, rate: '' }));
+    }
+    if (savedProducts.length === 0 && records.length){
+      const found = new Map();
+      records.forEach(rec => {
+        const products = rec.products && rec.products.length ? rec.products : [{product:rec.product||'', rate:rec.rate||''}];
+        products.forEach(p => { if (p.product && !found.has(p.product)) found.set(p.product, p.rate || ''); });
+      });
+      savedProducts = Array.from(found, ([name, rate]) => ({ name, rate }));
+    }
+    // One-time seed of the standard chemical list, so they're saved permanently.
+    // Only runs once (flagged), so deleting one later won't bring it back.
+    let chemSeeded = null;
+    try { chemSeeded = await storage.get('chemProductsSeeded'); } catch(e){ chemSeeded = null; }
+    if (!chemSeeded){
+      const existingNames = new Set(savedProducts.map(p => p.name.trim().toLowerCase()));
+      DEFAULT_SAVED_PRODUCTS.forEach(p => {
+        if (!existingNames.has(p.name.trim().toLowerCase())){
+          savedProducts.push(p);
+          existingNames.add(p.name.trim().toLowerCase());
+        }
+      });
+      await storage.set('chemProductsSeeded', '1').catch(()=>{});
+    }
+    await storage.set('savedProducts', JSON.stringify(savedProducts)).catch(()=>{});
+    renderProductDatalist();
+    renderSavedProducts();
+    if (!(await storage.get('operator').catch(()=>null))) {
+      await storage.set('operator', JSON.stringify(operator)).catch(()=>{});
+    }
+    renderOperator();
+    renderEquipment();
+    renderRecords();
+  }
+
+  function renderProductDatalist(){
+    const list = document.getElementById('productList');
+    list.innerHTML = savedProducts.map(p => '<option value="'+esc(p.name)+'">').join('');
+    renderQuickPick();
+  }
+
+  function findSavedProduct(name){
+    return savedProducts.find(p => p.name.toLowerCase() === String(name||'').trim().toLowerCase());
+  }
+
+  async function upsertSavedProduct(name, rate){
+    name = String(name||'').trim();
+    if (!name) return;
+    const existing = findSavedProduct(name);
+    if (existing){
+      if (rate && !existing.rate) existing.rate = rate;
+    } else {
+      savedProducts.push({ name, rate: rate || '' });
+    }
+    await storage.set('savedProducts', JSON.stringify(savedProducts)).catch(()=>{});
+    renderProductDatalist();
+    renderSavedProducts();
+  }
+
+  async function deleteSavedProduct(name){
+    savedProducts = savedProducts.filter(p => p.name !== name);
+    await storage.set('savedProducts', JSON.stringify(savedProducts)).catch(()=>{});
+    renderProductDatalist();
+    renderSavedProducts();
+  }
+
+  function renderSavedProducts(){
+    const wrap = document.getElementById('savedProductsList');
+    const empty = document.getElementById('savedProductsEmpty');
+    if (savedProducts.length === 0){
+      wrap.innerHTML = '';
+      empty.style.display = 'block';
+      return;
+    }
+    empty.style.display = 'none';
+    const sorted = [...savedProducts].sort((a,b) => a.name.localeCompare(b.name));
+    wrap.innerHTML = sorted.map(p =>
+      '<span class="saved-chip">'+esc(p.name)
+      + (p.rate ? ' <span class="rate">@ '+esc(p.rate)+'</span>' : '')
+      + '<button type="button" class="del-saved-btn" data-name="'+esc(p.name)+'" aria-label="Remove saved product">✕</button></span>'
+    ).join('');
+    wrap.querySelectorAll('.del-saved-btn').forEach(btn => {
+      btn.addEventListener('click', () => deleteSavedProduct(btn.dataset.name));
+    });
+  }
+
+  document.getElementById('addSavedBtn').addEventListener('click', async () => {
+    const nameInput = document.getElementById('newSavedName');
+    const rateInput = document.getElementById('newSavedRate');
+    const name = nameInput.value.trim();
+    if (!name) { nameInput.focus(); return; }
+    await upsertSavedProduct(name, rateInput.value.trim());
+    nameInput.value = '';
+    rateInput.value = '';
+    nameInput.focus();
+  });
+
+  function renderOperator(){
+    document.getElementById('operatorLine').textContent = operator.name + ' · ' + operator.address;
+    document.getElementById('operatorView').innerHTML =
+      '<div class="readonly-view">'
+      + '<div><div class="k">User name</div><div class="v">'+esc(operator.name)+'</div></div>'
+      + '<div><div class="k">User address</div><div class="v">'+esc(operator.address)+'</div></div>'
+      + '<div><div class="k">Contact number</div><div class="v">'+esc(operator.phone)+'</div></div>'
+      + '</div>';
+  }
+  function renderEquipment(){
+    document.getElementById('equipmentView').innerHTML =
+      '<div class="readonly-view">'
+      + '<div><div class="k">Equipment type</div><div class="v">'+esc(equipment.type)+'</div></div>'
+      + '<div><div class="k">Nozzle & flow rate</div><div class="v">'+esc(equipment.nozzle||'—')+'</div></div>'
+      + '<div><div class="k">Spray pressure</div><div class="v">'+esc(equipment.pressure)+' Bar</div></div>'
+      + '<div><div class="k">Spray volume</div><div class="v">'+esc(equipment.volume)+' L/ha</div></div>'
+      + '<div><div class="k">Travel speed</div><div class="v">'+esc(equipment.speed)+' km/hr</div></div>'
+      + '</div>';
+  }
+
+  function formatTime(t){
+    if (!t) return '';
+    const [h, m] = t.split(':').map(Number);
+    if (isNaN(h) || isNaN(m)) return t;
+    const period = h >= 12 ? 'PM' : 'AM';
+    const h12 = h % 12 === 0 ? 12 : h % 12;
+    return h12 + ':' + String(m).padStart(2,'0') + ' ' + period;
+  }
+
+  function esc(s){
+    return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function renderRecords(){
+    const body = document.getElementById('recordsBody');
+    const sorted = [...records].sort((a,b) => b.date.localeCompare(a.date));
+    if (sorted.length === 0){
+      body.innerHTML = '';
+      document.getElementById('emptyState').style.display = 'block';
+    } else {
+      document.getElementById('emptyState').style.display = 'none';
+      body.innerHTML = sorted.map(rec => {
+        const z = deltaTZone(rec.deltaT);
+        const products = rec.products && rec.products.length ? rec.products : [{product:rec.product||'', rate:rec.rate||''}];
+        const productsHtml = '<div class="product-list-cell">' + products.map(p =>
+          '<div>'+esc(p.product)+(p.rate ? ' <span style="color:var(--ink-soft);">@ '+esc(p.rate)+'</span>' : '')+'</div>'
+        ).join('') + '</div>';
+        return '<tr>'
+          + '<td>'+esc(rec.date)+'</td>'
+          + '<td>'+esc(rec.paddock)+'</td>'
+          + '<td>'+productsHtml+'</td>'
+          + '<td>'+esc(rec.crop)+'</td>'
+          + '<td>'+esc(rec.area)+'</td>'
+          + '<td>'+esc(formatTime(rec.time))+'</td>'
+          + '<td>'+esc(rec.windSpeed)+'</td>'
+          + '<td>'+esc(rec.windDir)+'</td>'
+          + '<td>'+esc(rec.temp)+'</td>'
+          + '<td>'+esc(rec.rh)+'</td>'
+          + '<td><span class="dt-pill '+z.cls+'">'+z.label+'</span></td>'
+          + '<td><button class="del-btn" data-id="'+rec.id+'" aria-label="Delete record">✕</button></td>'
+          + '</tr>';
+      }).join('');
+    }
+    document.getElementById('recordCount').textContent = records.length + (records.length===1 ? ' record' : ' records') + ' on file';
+    body.querySelectorAll('.del-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        records = records.filter(r => r.id !== btn.dataset.id);
+        await storage.set('records', JSON.stringify(records)).catch(()=>{});
+        renderRecords();
+      });
+    });
+  }
+
+  document.getElementById('editOperatorBtn').addEventListener('click', () => {
+    document.getElementById('opName').value = operator.name;
+    document.getElementById('opAddress').value = operator.address;
+    document.getElementById('opPhone').value = operator.phone;
+    document.getElementById('operatorView').style.display = 'none';
+    document.getElementById('operatorEdit').style.display = 'block';
+  });
+  document.getElementById('cancelOperator').addEventListener('click', () => {
+    document.getElementById('operatorView').style.display = 'block';
+    document.getElementById('operatorEdit').style.display = 'none';
+  });
+  document.getElementById('saveOperator').addEventListener('click', async () => {
+    operator = {
+      name: document.getElementById('opName').value.trim() || operator.name,
+      address: document.getElementById('opAddress').value.trim() || operator.address,
+      phone: document.getElementById('opPhone').value.trim() || operator.phone,
+    };
+    await storage.set('operator', JSON.stringify(operator)).catch(()=>{});
+    renderOperator();
+    document.getElementById('operatorView').style.display = 'block';
+    document.getElementById('operatorEdit').style.display = 'none';
+  });
+
+  document.getElementById('editEquipmentBtn').addEventListener('click', () => {
+    document.getElementById('eqType').value = equipment.type;
+    document.getElementById('eqNozzle').value = equipment.nozzle;
+    document.getElementById('eqPressure').value = equipment.pressure;
+    document.getElementById('eqVolume').value = equipment.volume;
+    document.getElementById('eqSpeed').value = equipment.speed;
+    document.getElementById('equipmentView').style.display = 'none';
+    document.getElementById('equipmentEdit').style.display = 'block';
+  });
+  document.getElementById('cancelEquipment').addEventListener('click', () => {
+    document.getElementById('equipmentView').style.display = 'block';
+    document.getElementById('equipmentEdit').style.display = 'none';
+  });
+  document.getElementById('saveEquipment').addEventListener('click', async () => {
+    equipment = {
+      type: document.getElementById('eqType').value.trim() || equipment.type,
+      nozzle: document.getElementById('eqNozzle').value.trim(),
+      pressure: document.getElementById('eqPressure').value.trim() || equipment.pressure,
+      volume: document.getElementById('eqVolume').value.trim() || equipment.volume,
+      speed: document.getElementById('eqSpeed').value.trim() || equipment.speed,
+    };
+    await storage.set('equipment', JSON.stringify(equipment)).catch(()=>{});
+    renderEquipment();
+    document.getElementById('equipmentView').style.display = 'block';
+    document.getElementById('equipmentEdit').style.display = 'none';
+  });
+
+  function renderQuickPick(){
+    const wrap = document.getElementById('quickPickRow');
+    if (!wrap) return;
+    if (savedProducts.length === 0){
+      wrap.innerHTML = '';
+      return;
+    }
+    const sorted = [...savedProducts].sort((a,b) => a.name.localeCompare(b.name));
+    wrap.innerHTML = '<div class="quick-pick-label">Tap to add:</div>' + sorted.map(p =>
+      '<button type="button" class="quick-pick-chip" data-name="'+esc(p.name)+'" data-rate="'+esc(p.rate||'')+'">'
+      + esc(p.name) + (p.rate ? ' <span class="rate">@ '+esc(p.rate)+'</span>' : '')
+      + '</button>'
+    ).join('');
+    wrap.querySelectorAll('.quick-pick-chip').forEach(btn => {
+      btn.addEventListener('click', () => fillProductFromQuickPick(btn.dataset.name, btn.dataset.rate));
+    });
+  }
+
+  function fillProductFromQuickPick(name, rate){
+    const rows = Array.from(document.querySelectorAll('#productRows .product-row'));
+    let target = rows.find(row => !row.querySelector('.pr-name').value.trim());
+    if (!target){
+      addProductRow('', '');
+      const all = document.querySelectorAll('#productRows .product-row');
+      target = all[all.length - 1];
+    }
+    target.querySelector('.pr-name').value = name;
+    if (rate) target.querySelector('.pr-rate').value = rate;
+  }
+
+  function renderProductRows(){
+    const rows = document.querySelectorAll('#productRows .product-row');
+    document.querySelectorAll('.remove-product-btn').forEach(btn => {
+      btn.disabled = rows.length <= 1;
+    });
+  }
+  function addProductRow(product, rate){
+    const container = document.getElementById('productRows');
+    const row = document.createElement('div');
+    row.className = 'product-row';
+    row.innerHTML =
+      '<input class="pr-name" list="productList" placeholder="e.g. Glyphosate 450 + Wetter" value="'+ (product ? esc(product) : '') +'">'
+      + '<input class="pr-rate" placeholder="e.g. 1.5 L/ha" value="'+ (rate ? esc(rate) : '') +'">'
+      + '<button type="button" class="remove-product-btn" aria-label="Remove product">✕</button>';
+    container.appendChild(row);
+    row.querySelector('.remove-product-btn').addEventListener('click', () => {
+      if (document.querySelectorAll('#productRows .product-row').length > 1){
+        row.remove();
+        renderProductRows();
+      }
+    });
+    const nameInput = row.querySelector('.pr-name');
+    const rateInput = row.querySelector('.pr-rate');
+    nameInput.addEventListener('change', () => {
+      const match = findSavedProduct(nameInput.value);
+      if (match && match.rate && !rateInput.value.trim()){
+        rateInput.value = match.rate;
+      }
+    });
+    renderProductRows();
+  }
+  function resetProductRows(){
+    document.getElementById('productRows').innerHTML = '';
+    addProductRow('', '');
+  }
+  document.getElementById('addProductBtn').addEventListener('click', () => addProductRow('', ''));
+
+  function updateGauge(){
+    const t = parseFloat(document.getElementById('rTemp').value);
+    const rh = parseFloat(document.getElementById('rRH').value);
+    const wrap = document.getElementById('gaugeWrap');
+    if (isNaN(t) || isNaN(rh)){
+      wrap.style.display = 'none';
+      return null;
+    }
+    const dt = calcDeltaT(t, rh);
+    const z = deltaTZone(dt);
+    wrap.style.display = 'block';
+    document.getElementById('gaugeValue').textContent = dt + '°C';
+    const pct = Math.max(0, Math.min(100, (dt / 16) * 100));
+    document.getElementById('gaugeNeedle').style.left = pct + '%';
+    const verdict = document.getElementById('gaugeVerdict');
+    verdict.textContent = z.verdict;
+    verdict.style.color = z.cls === 'dt-safe' ? '#2F4626' : (z.cls === 'dt-caution' ? 'var(--wheat-dark)' : 'var(--rust)');
+    return dt;
+  }
+  document.getElementById('rTemp').addEventListener('input', updateGauge);
+  document.getElementById('rRH').addEventListener('input', updateGauge);
+
+  document.getElementById('recordForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const t = parseFloat(document.getElementById('rTemp').value);
+    const rh = parseFloat(document.getElementById('rRH').value);
+    const dt = (!isNaN(t) && !isNaN(rh)) ? calcDeltaT(t, rh) : null;
+    const products = Array.from(document.querySelectorAll('#productRows .product-row')).map(row => ({
+      product: row.querySelector('.pr-name').value.trim(),
+      rate: row.querySelector('.pr-rate').value.trim(),
+    })).filter(p => p.product || p.rate);
+    const rec = {
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2,7),
+      date: document.getElementById('rDate').value,
+      paddock: document.getElementById('rPaddock').value.trim(),
+      products: products,
+      crop: document.getElementById('rCrop').value.trim(),
+      area: document.getElementById('rArea').value,
+      time: document.getElementById('rTime').value,
+      windSpeed: document.getElementById('rWindSpeed').value,
+      windDir: document.getElementById('rWindDir').value,
+      temp: document.getElementById('rTemp').value,
+      rh: document.getElementById('rRH').value,
+      deltaT: dt,
+    };
+    records.push(rec);
+    for (const p of products){
+      if (p.product) await upsertSavedProduct(p.product, p.rate);
+    }
+    try {
+      const result = await storage.set('records', JSON.stringify(records));
+      if (!result) console.error('Storage save failed');
+    } catch(err){ console.error('Storage error', err); }
+    renderRecords();
+    e.target.reset();
+    resetProductRows();
+    document.getElementById('gaugeWrap').style.display = 'none';
+  });
+
+  document.getElementById('exportBtn').addEventListener('click', () => {
+    const csvRow = (arr) => arr.map(v => '"' + String(v==null?'':v).replace(/"/g,'""') + '"').join(',');
+
+    const lines = [];
+    lines.push(csvRow(['Operator & property']));
+    lines.push(csvRow(['User name', operator.name]));
+    lines.push(csvRow(['User address', operator.address]));
+    lines.push(csvRow(['Contact number', operator.phone]));
+    lines.push('');
+    lines.push(csvRow(['Equipment']));
+    lines.push(csvRow(['Equipment type', equipment.type]));
+    lines.push(csvRow(['Nozzle type & flow rate', equipment.nozzle]));
+    lines.push(csvRow(['Spray pressure (Bar)', equipment.pressure]));
+    lines.push(csvRow(['Spray volume (L/ha)', equipment.volume]));
+    lines.push(csvRow(['Travel speed (km/hr)', equipment.speed]));
+    lines.push('');
+    lines.push(csvRow(['Spray log']));
+
+    const headers = ['Date','Paddock location or ID','Products (incl. adjuvants) and rate/ha','Crop or situation','Area treated (ha)','Spray time','Wind speed (km/hr)','Wind direction','Temp (C)','RH (%)','Delta T'];
+    const rows = [...records].sort((a,b)=>a.date.localeCompare(b.date)).map(r => {
+      const products = r.products && r.products.length ? r.products : [{product:r.product||'', rate:r.rate||''}];
+      const productStr = products.map(p => p.product + (p.rate ? ' @ ' + p.rate : '')).join('\n');
+      return [r.date, r.paddock, productStr, r.crop, r.area, formatTime(r.time), r.windSpeed, r.windDir, r.temp, r.rh, (r.deltaT===null?'':r.deltaT)];
+    });
+    lines.push(csvRow(headers));
+    rows.forEach(row => lines.push(csvRow(row)));
+
+    const csv = lines.join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'spray-record-' + (operator.name || 'export').replace(/\s+/g,'-').toLowerCase() + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
+  document.getElementById('exportExcelBtn').addEventListener('click', () => {
+    const rowsData = [...records].sort((a,b)=>a.date.localeCompare(b.date));
+    const headers = ['Date','Paddock location or ID','Products (incl. adjuvants) and rate/ha','Crop or situation','Area treated (ha)','Spray time','Wind speed (km/hr)','Wind direction','Temp (C)','RH (%)','Delta T'];
+    const cellStyle = 'padding:6px 8px;border:1px solid #ccc;vertical-align:top;font-family:Calibri,Arial,sans-serif;font-size:11pt;';
+    const wrapCellStyle = cellStyle + 'white-space:normal;mso-line-height-rule:exactly;';
+
+    const headRow = '<tr>' + headers.map(h =>
+      `<th style="${cellStyle}background:#33492E;color:#ffffff;text-align:left;">${esc(h)}</th>`
+    ).join('') + '</tr>';
+
+    const bodyRows = rowsData.map(r => {
+      const products = r.products && r.products.length ? r.products : [{product:r.product||'', rate:r.rate||''}];
+      const productHtml = products.map(p => esc(p.product + (p.rate ? ' @ ' + p.rate : ''))).join('<br>');
+      const plainCells = [r.date, r.paddock, r.crop, r.area, formatTime(r.time), r.windSpeed, r.windDir, r.temp, r.rh, (r.deltaT===null?'':r.deltaT)];
+      return '<tr>'
+        + `<td style="${cellStyle}">${esc(plainCells[0])}</td>`
+        + `<td style="${cellStyle}">${esc(plainCells[1])}</td>`
+        + `<td style="${wrapCellStyle}">${productHtml}</td>`
+        + plainCells.slice(2).map(v => `<td style="${cellStyle}">${esc(v==null?'':v)}</td>`).join('')
+        + '</tr>';
+    }).join('');
+
+    const infoBlock = `
+      <table style="border-collapse:collapse;margin-bottom:14px;">
+        <tr><td colspan="2" style="${cellStyle}font-weight:bold;background:#F0EDDE;">Operator & property</td></tr>
+        <tr><td style="${cellStyle}">User name</td><td style="${cellStyle}">${esc(operator.name)}</td></tr>
+        <tr><td style="${cellStyle}">User address</td><td style="${cellStyle}">${esc(operator.address)}</td></tr>
+        <tr><td style="${cellStyle}">Contact number</td><td style="${cellStyle}">${esc(operator.phone)}</td></tr>
+      </table>
+      <table style="border-collapse:collapse;margin-bottom:14px;">
+        <tr><td colspan="2" style="${cellStyle}font-weight:bold;background:#F0EDDE;">Equipment</td></tr>
+        <tr><td style="${cellStyle}">Equipment type</td><td style="${cellStyle}">${esc(equipment.type)}</td></tr>
+        <tr><td style="${cellStyle}">Nozzle type & flow rate</td><td style="${cellStyle}">${esc(equipment.nozzle)}</td></tr>
+        <tr><td style="${cellStyle}">Spray pressure (Bar)</td><td style="${cellStyle}">${esc(equipment.pressure)}</td></tr>
+        <tr><td style="${cellStyle}">Spray volume (L/ha)</td><td style="${cellStyle}">${esc(equipment.volume)}</td></tr>
+        <tr><td style="${cellStyle}">Travel speed (km/hr)</td><td style="${cellStyle}">${esc(equipment.speed)}</td></tr>
+      </table>
+    `;
+
+    const html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">'
+      + '<head><meta charset="UTF-8">'
+      + '<!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>'
+      + '<x:Name>Spray Log</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions>'
+      + '</x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->'
+      + '</head><body>'
+      + infoBlock
+      + '<table style="border-collapse:collapse;">' + headRow + bodyRows + '</table>'
+      + '</body></html>';
+
+    const blob = new Blob(['\ufeff' + html], { type: 'application/vnd.ms-excel' });
+    const url2 = URL.createObjectURL(blob);
+    const a2 = document.createElement('a');
+    a2.href = url2;
+    a2.download = 'spray-record-' + (operator.name || 'export').replace(/\s+/g,'-').toLowerCase() + '.xls';
+    document.body.appendChild(a2);
+    a2.click();
+    document.body.removeChild(a2);
+    URL.revokeObjectURL(url2);
+  });
+
+  document.getElementById('rDate').valueAsDate = new Date();
+  resetProductRows();
+  loadAll();
+})();
+</script>
+</body>
+</html>
